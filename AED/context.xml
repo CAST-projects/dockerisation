@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+	<Manager pathname="" />
+	<Resource name="jdbc/domains/${domainName}" 
+		url="jdbc:postgresql://${host}:${port}/postgres"
+		connectionInitSqls="SET search_path TO ${schema};"
+		username="${user}"
+	       	password="${password}" 
+		auth="Container"
+		type="javax.sql.DataSource"
+		driverClassName="org.postgresql.Driver"
+		validationQuery="select 1" 
+		initialSize="5" 
+		maxTotal="20" 
+		maxIdle="10" 
+		maxWaitMillis="-1"/>
+	
+</Context>
