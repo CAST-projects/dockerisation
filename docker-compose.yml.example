@@ -1,0 +1,46 @@
+version: '2'
+services:
+
+        aicp:
+                build: ./AICP
+                container_name: aicp
+                restart: always
+                ports:
+                        - "8887:8080"
+                environment:
+                        - DELIVERY_FOLDER=/usr/local/castt
+                volumes:
+                        - ./delivery/:/usr/local/castt
+
+        aad:
+                build: ./AAD
+                container_name: aad
+                restart: always
+                ports:
+                        - "8888:8080"
+                environment:
+                        - CSS_HOST=192.168.xx.xx
+                        - CSS_PORT=2280
+                        - CSS_SCHEMA=xxxxxxx_measure
+
+        aed:
+                build: ./AED
+                container_name: aed
+                restart: always
+                ports:
+                        - "8889:8080"
+                environment:
+                        - CSS_HOST=192.168.xx.xx
+                        - CSS_PORT=2280
+                        - CSS_SCHEMA=xxxxxxx_central
+
+                          #        css:
+                          #    build: ./CSS
+                          #container_name: css
+                          #restart: always
+                          #ports:
+                          #- "2280:5432"
+                          #environment:
+                          #- POSTGRES_USER=operator
+                          #- POSTGRES_PASSWORD=CastAIP
+                          #- POSTGRES_DB=postgres
