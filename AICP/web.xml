@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app id="CAST_AIC_Portal_Server" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
+	<display-name>AIC Portal Server</display-name>
+
+<!-- ############################################################### -->
+<!--   CUSTOMER CONFIGURATION SECTION                                -->
+<!-- ############################################################### -->
+
+	<!-- Source code delivery folder. This folder contains : root/logs: contains 
+		the log files. root/plugins: contains the custom dmt plugins root/data: contains 
+		every data handled by the dmt root/temp: contains temporary data used by 
+		the AIC portal -->
+	
+	<context-param>
+		<param-name>sourceCodeDeliveryFolder</param-name>
+		<param-value>${sourceCodeDeliveryFolderPath}</param-value>
+	</context-param>
+	
+
+	<!-- Your company name. Provide a company name to display it at login page 
+		You may also provide company logo: for login page: [webapp]/themes/resources/images/company_login.png 
+		for other pages: [webapp]/themes/resources/images/company.png -->
+	<!--
+	 <context-param>
+			<param-name>companyName</param-name> 
+			<param-value>[your company name]</param-value>
+	</context-param>
+	-->
+	
+	<!-- The email address of the Cast AIP administrator -->
+	<context-param>
+		<param-name>administratorEmailAddress</param-name>
+		<param-value>cast_administrator@customer.local</param-value>
+	</context-param>
+	
+	<!-- Optional parameter for AIC Portal public URL. Uncomment and set if clients access AIC Portal through
+	one ore more proxies with address translation. The value must be the URL used by clients to access AIC Portal. -->
+	<!--
+	<context-param>
+		<param-name>publicUrl</param-name>
+		<param-value>http[s]://proxy-host[:proxy-port]/path-to-aicportal</param-value>
+	</context-param>
+	-->
+
+<!-- ############################################################### -->
+<!--   CAST RESERVED SECTION: Do not change after this               -->
+<!-- ############################################################### -->
+
+	<!-- Spring config location -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>/WEB-INF/application-context.xml</param-value>
+	</context-param>
+
+	<!-- Spring context initialization -->
+	<context-param>
+		<param-name>contextInitializerClasses</param-name>
+		<param-value>com.castsoftware.dmt.server.SpringSecurityInitializer</param-value>
+	</context-param>
+
+	<!-- CAUTION: This listener MUST be the 1st listener -->
+	<!-- Log4j logging initialization Listener -->
+	<listener>
+		<listener-class>com.castsoftware.dmt.server.log4j.CustomLog4jServletContextListener
+		</listener-class>
+	</listener>
+
+	<!-- CAUTION: This listener MUST be the 2nd listener -->
+	<!-- CASTLOG2 logging initialization Listener -->
+	<listener>
+		<listener-class>com.castsoftware.dmt.server.LogContextListener
+		</listener-class>
+	</listener>
+
+	<!-- Application Startup/Shutdown Listener -->
+	<listener>
+		<listener-class>com.castsoftware.dmt.server.ApplicationContextListener
+		</listener-class>
+	</listener>
+
+	<!-- HTTP Connectivity init Listener -->
+	<listener>
+		<listener-class>com.castsoftware.dmt.server.action.ActionServletContextListener
+		</listener-class>
+	</listener>
+
+	<!-- Spring init Listener -->
+	<listener>
+		<listener-class>com.castsoftware.dmt.server.SpringContextLoaderListenerWrapper
+		</listener-class>
+	</listener>
+
+	<!-- Spring Session Events Listener -->
+	<listener>
+		<listener-class>org.springframework.security.web.session.HttpSessionEventPublisher</listener-class>
+	</listener>
+
+	<!-- DB init and upgrade Listener -->
+	<listener>
+		<listener-class>com.castsoftware.dmt.server.db.DbManagementListener</listener-class>
+	</listener>
+	
+	<!-- CAUTION: This filter MUST be the 1st filter -->
+	<!-- Log4j logging Filter -->
+	<filter>
+		<filter-name>log4jServletFilter</filter-name>
+		<filter-class>org.apache.logging.log4j.web.Log4jServletFilter
+		</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>log4jServletFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>INCLUDE</dispatcher>
+		<dispatcher>ERROR</dispatcher>
+	</filter-mapping>
+
+	<!-- CAUTION: This filter MUST be the 2nd filter -->
+	<!-- CASTLOG2 logging Filter -->
+	<filter>
+		<filter-name>LogSetter</filter-name>
+		<filter-class>com.castsoftware.dmt.server.filter.LogSetterFilter
+		</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>LogSetter</filter-name>
+		<url-pattern>*</url-pattern>
+	</filter-mapping>
+	
+	<!-- Filter to block access to application when configuration is not complete -->
+	<filter>
+		<filter-name>IsHalfDeadFilter</filter-name>
+		<filter-class>com.castsoftware.dmt.server.filter.IsHalfDeadFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>IsHalfDeadFilter</filter-name>
+		<url-pattern>*</url-pattern>
+	</filter-mapping>
+
+	<!-- Cache management Filter -->
+	<filter>
+		<filter-name>manageCacheFilter</filter-name>
+		<filter-class>com.castsoftware.dmt.server.filter.ResponseCacheHeaderFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>manageCacheFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<!-- Filter to secure Jersey with Spring Security -->
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>
+			org.springframework.web.filter.DelegatingFilterProxy
+		</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<!-- Filter for CSRF token provisionning -->
+	<filter>
+		<filter-name>CsrfTokenProvisionningFilter</filter-name>
+		<filter-class>com.castsoftware.dmt.server.filter.CsrfTokenProvisionningFilter
+		</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>CsrfTokenProvisionningFilter</filter-name>
+		<url-pattern>/ws/*</url-pattern>
+	</filter-mapping>
+
+	<!-- Servlet for REST operations -->
+	<servlet>
+		<servlet-name>Web Services</servlet-name>
+		<servlet-class>com.sun.jersey.spi.spring.container.servlet.SpringServlet
+		</servlet-class>
+		<init-param>
+			<param-name>com.sun.jersey.config.property.packages</param-name>
+			<param-value>com.castsoftware.dmt.server.webservices.rest
+			</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+			<param-value>true</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.config.feature.DisableWADL</param-name>
+			<param-value>true</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Web Services</servlet-name>
+		<url-pattern>/ws/*</url-pattern>
+	</servlet-mapping>
+
+	<!-- Servlet for file exchange with DMT -->
+	<servlet>
+		<servlet-name>Upload</servlet-name>
+		<servlet-class>com.castsoftware.dmt.server.ActionServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Upload</servlet-name>
+		<url-pattern>/Upload</url-pattern>
+	</servlet-mapping>
+
+	<!-- Servlet for construction of JNLP files -->
+	<servlet>
+		<description></description>
+		<display-name>dmt-launcher.jnlp</display-name>
+		<servlet-name>dmt-launcher.jnlp</servlet-name>
+		<servlet-class>com.castsoftware.dmt.server.JnlpServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>dmt-launcher.jnlp</servlet-name>
+		<url-pattern>/Install/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>dmt-launcher.jnlp</servlet-name>
+		<url-pattern>*.jnlp</url-pattern>
+	</servlet-mapping>
+	
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
+	
+	<session-config>
+		<session-timeout>15</session-timeout>
+	</session-config>
+	
+	<error-page>
+		<error-code>400</error-code>
+		<location>/errorPages/400.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>401</error-code>
+		<location>/errorPages/401.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>403</error-code>
+		<location>/errorPages/403.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>404</error-code>
+		<location>/errorPages/404.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>405</error-code>
+		<location>/errorPages/405.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>406</error-code>
+		<location>/errorPages/406.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>409</error-code>
+		<location>/errorPages/409.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>415</error-code>
+		<location>/errorPages/415.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>500</error-code>
+		<location>/errorPages/500.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>501</error-code>
+		<location>/errorPages/501.txt</location>
+	</error-page>
+	<error-page>
+		<error-code>503</error-code>
+		<location>/errorPages/503.txt</location>
+	</error-page>
+	
+</web-app>
